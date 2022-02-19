@@ -1,24 +1,29 @@
 <?php 
-require_once('db_connect.php');
+include 'db_connect.php';
 
-if(isset($_GET['ItemNum'])) {
-	$itemnum = $_GET['ItemNum'];
-	db();
-	global $link;
-	$query = "SELECT Title, Description, date FROM todoitems WHERE ItemNum = '$itemnum'";
-	$result = mysqli_query($link, $query);
-	if(mysqli_num_rows($result)==1) {
-		$row = mysqli_fetch_array($result);
-		if($row) {
-			$title = $row['Title'];
-			$description = $row['Description'];
+$query = "SELECT * FROM `todoitems` ORDER BY `ItemNum` ASC";
+$result = mysqli_query($connect, $query);
 
-			echo "
-			<h1>$title</h1>
-			<p>$description</p>
-			";
-		} else {
 
-		}
+if(mysqli_num_rows($result) > 0) {
+	while($row = mysqli_fetch_assoc($result)) {
+
+?>
+
+<div class="todo">
+	<li class="todo-item">
+		<?php echo $row['Title'] ?>
+		<p>
+			<?php echo $row['Description'] ?>
+		</p>
+	</li>
+	<button id="removeBtn" aria-label="close-button" class="close-btn" data-id="<?php echo $row['ItemNum']; ?>"><span class="x">✕</span></button>
+</div>
+
+<?php 
 	}
+	echo '<div class="pending-text">YOU HAVE ' . mysqli_num_rows($result) . ' PENDING TASK</div>';
+} else {
+	echo '<li class="pending-text"><span class="text">NO TASK ON TODO LIST</span></li>';
 }
+?>

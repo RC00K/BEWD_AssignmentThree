@@ -23,57 +23,77 @@ $description = filter_input(INPUT_POST, 'Description', FILTER_UNSAFE_RAW);
 <body>
 	<header>
 		<h2>ToDo List</h2>
-		<button type="submit" name="submit" value="submit" class="submit-btn" onclick="location.href='create.php'">New Item</button>
+		<form method="POST" class="todo-form" aria-label="todo-input">			
+			<input type="text" id="title" class="todo-input" aria-label="todo-input" 
+			placeholder="Title" aria-placeholder="new-todo..." required>
+			
+			<input type="text" id="description" class="tododesc-input" aria-label="tododesc-input" 
+			placeholder="Description" aria-placeholder="new-desc..." required>
+			
+			<button type="submit" id="addBtn" name="submit" value="submit" class="submit-btn">Add Item</button>
 	</header>
-	<?php 
-		db();
-		global $link;
-		$query = "SELECT ItemNum, Title, Description FROM todoitems ORDER BY ItemNum ASC";
-		$result = mysqli_query($link, $query);
-		
-		if(mysqli_num_rows($result) >= 1){
-    		while($row = mysqli_fetch_array($result)){
-        		$itemnum = $row['ItemNum'];
-        		$title = $row['Title'];
-        		$description = $row['Description'];
-	?>
 	<main class="todo-container">
-		<ul class="todo-list" id="all-todos">
-			<div class="todo">
-				<li class="todo-item">
-					<h1><?php echo $title ?></h1>
-        			<p><?php echo $description ?></p>
-				</li>
-				<button aria-label="close-button" class="close-btn" value="ItemNum" method="POST" action="delete.php"><span class="x">✕</span></button>
-			</div>
+		<ul class="todo-list" id="tasks">
+			
 		</ul>
-	<script>
-		const allTodo = document.getElementById('all-todos')
-		new Sortable(allTodo, {
-			animation: 200
-		})
-
-		$(document).ready(function(){
-            $('.close-btn').click(function(){
-                const id = $(this).attr('id');
-                
-                $.post("delete.php", 
-                    {
-                        id: id
-                    },
-                    (data)  => {
-                        if(data){
-                            $(this).parent().hide(600);
-                    }
-                }
-            );
-        });
-	</script>
-	<script src="js/script.js"></script>
 	</main>
-	<?php 
-  		}
-  	}
-  	?>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>	
+	<script>
+		$(document).ready(function() {
+			// Show Items
+			function loadTasks() {
+				$.ajax({
+					url: "detail.php",
+					type: "POST",
+					success: function(data) {
+						$("#tasks").html(data);
+					}
+				});
+			}
+
+			loadTasks();
+
+
+			// Add Task
+			$("#addBtn").on("click", function(e) {
+				e.preventDefault();
+
+				var title = $("#title").val();
+				var description = $("#description").val();
+
+				$.ajax({
+					url: "create.php",
+					type: "POST",
+					data: {title: title, description: description},
+					success: function(data) {
+						loadTasks();
+						$("#title").val('');
+						$("#description").val('');
+						if (data == 0) {
+							alert("Something went wrong. Please try again.");
+						}
+					}
+				});
+			});
+
+			// Delete Items
+			$(document).on("click", "#removeBtn", function(e) {
+				e.preventDefault();
+				var itemnum = $(this).data('itemnum');
+
+				$.ajax({
+					url: "delete.php",
+					type: "POST",
+					data: {itemnum: itemnum},
+					success: function(data) {
+						loadTasks();
+						if(data == 0) {
+							alert("Something went wrong. Please try again.");
+						}
+					}
+				});
+			});
+		});
+	</script>
 </body>
 </html>
